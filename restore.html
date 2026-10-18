@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PermRepo — Atjaunošana</title>
+    
+    <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://ar-io.dev https://arweave.net https://sepolia.base.org https://base-sepolia-rpc.publicnode.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none';">
+    
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="no-referrer">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="language-selector">
+            <button class="lang-btn" data-lang="lv">LV</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+            <button class="lang-btn" data-lang="eo">EO</button>
+        </div>
+
+        <img src="logo-nosaukums.svg" alt="PermRepo" class="logo-title">
+        <p class="subtitle" data-i18n="restore-subtitle">Atjauno GitHub repo no Arweave — bez servera!</p>
+
+        <!-- ============================================ -->
+        <!-- SOLIS 1: Maks (neobligāts)                    -->
+        <!-- ============================================ -->
+        <div class="step" id="step1" data-status="active">
+            <div class="step-header">
+                <span class="step-number">1</span>
+                <span class="step-title" data-i18n="step1-title">Savienot maku (neobligāti)</span>
+                <span class="step-check">
+                    <img src="izdevas-veiksmigi.svg" class="icon-check" alt="">
+                </span>
+            </div>
+            <div class="step-content">
+                <p class="help-text" data-i18n="wallet-optional-hint">Maks nav obligāts. To var pieslēgt, lai izmantotu sava maka RPC, ja noklusējuma RPC nav pieejams.</p>
+                <div class="info-row">
+                    <span class="info-label" data-i18n="wallet-label">Savienotais maks</span>
+                    <span class="info-value" id="walletStatus" data-i18n="wallet-not-connected">Nav savienots</span>
+                </div>
+                <button id="connectWalletBtn" data-action="connect">
+                    <img src="wallet.svg" class="icon-button" alt="">
+                    <span data-i18n="connect-wallet">Savienot maku</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SOLIS 2: Ielādēt manifestu                   -->
+        <!-- ============================================ -->
+        <div class="step" id="step2" data-status="active">
+            <div class="step-header">
+                <span class="step-number">2</span>
+                <span class="step-title" data-i18n="step2-title">Ielādēt manifestu</span>
+                <span class="step-check">
+                    <img src="izdevas-veiksmigi.svg" class="icon-check" alt="">
+                </span>
+            </div>
+            <div class="step-content">
+                <div class="info-row">
+                    <span class="info-label" data-i18n="manifest-label">Arweave manifests (TX ID vai ar://)</span>
+                </div>
+                <input type="text" id="manifestInput" data-i18n-placeholder="manifest-placeholder" placeholder="ar://ABC123... vai https://ar-io.dev/raw/ABC123..." autocomplete="off" spellcheck="false">
+                <button id="verifyBtn">
+                    <img src="manifests.svg" class="icon-button" alt="">
+                    <span data-i18n="verify-manifest">Ielādēt manifestu</span>
+                </button>
+                <div id="manifestInfoSection" style="display: none;">
+                    <div class="manifest-info">
+                        <div class="info-row">
+                            <span class="info-label" data-i18n="manifest-info-repo">Repozitorijs</span>
+                            <span class="info-value" id="manifestRepoName">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label" data-i18n="manifest-info-repoid">Repository ID</span>
+                            <span class="info-value" id="manifestRepoId">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label" data-i18n="manifest-info-files">Failu skaits</span>
+                            <span class="info-value" id="manifestFileCount">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SOLIS 3: Ievadīt Master Key                  -->
+        <!-- ============================================ -->
+        <div class="step" id="step3" data-status="locked">
+            <div class="step-header">
+                <span class="step-number">3</span>
+                <span class="step-title" data-i18n="step3-title">Ievadīt Master Key</span>
+                <span class="step-check">
+                    <img src="izdevas-veiksmigi.svg" class="icon-check" alt="">
+                </span>
+            </div>
+            <div class="step-content">
+                <div class="info-row">
+                    <span class="info-label" data-i18n="master-key-label">Master atslēga</span>
+                </div>
+                <input type="password" id="masterKeyInput" data-i18n-placeholder="master-key-placeholder" placeholder="Ievadi savu master atslēgu..." autocomplete="off" autocapitalize="off" spellcheck="false">
+                <p class="help-text" data-i18n="master-key-hint"></p>
+                <button id="restoreBtn">
+                    <img src="arhivs.svg" class="icon-button" alt="">
+                    <span data-i18n="restore-btn">Atjaunot repozitoriju</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+        </div>
+        
+        <div id="status" class="status"></div>
+        <div id="debugInfo" class="debug-info"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha256-rMfkFFWoB2W1/Zx+4bgHim0WC7vKRVrq6FTeZclH1Z4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js" integrity="sha256-dOAMPiqczTEubVFU+cywkR0bNMtJvIIgJEopKgp3PCE=" crossorigin="anonymous"></script>
+    <script type="module" src="restore.js"></script>
+</body>
+</html>
