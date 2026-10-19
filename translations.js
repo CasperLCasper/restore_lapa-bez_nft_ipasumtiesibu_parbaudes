@@ -52,6 +52,8 @@ export const translations = {
         'zip-archives': 'ZIP arhīvi',
         'failed-archives': 'Neizdevušies arhīvi',
         'missing-files': 'Neatjaunoti faili',
+        'invalid-paths': 'Nederīgi failu ceļi',
+        'hash-mismatches': 'SHA-256 neatbilstības',
 
         'rpc-wrong-network': 'RPC atgriež nepareizu tīklu',
         'rpc-unavailable': 'Nav pieejams neviens RPC',
@@ -85,7 +87,12 @@ export const translations = {
         'debug-decrypting-done': 'Atšifrēšana pabeigta',
         'debug-decrypting-summary': 'Atšifrēti',
         'debug-decrypting-failed': 'Neizdevās atšifrēt',
-        'debug-aes-gcm-init': 'Inicializē AES-GCM atslēgu...'
+        'debug-aes-gcm-init': 'Inicializē AES-GCM atslēgu...',
+
+        'debug-hash-mismatch': 'SHA-256 neatbilstība, fails izlaists',
+        'debug-hash-missing': 'Manifestā trūkst SHA-256 hash, fails izlaists',
+        'debug-hash-mismatch-count': 'SHA-256 neatbilstību skaits',
+        'debug-invalid-path-count': 'Nederīgu ceļu skaits'
     },
 
     en: {
@@ -141,6 +148,8 @@ export const translations = {
         'zip-archives': 'ZIP archives',
         'failed-archives': 'Failed archives',
         'missing-files': 'Unrestored files',
+        'invalid-paths': 'Invalid file paths',
+        'hash-mismatches': 'SHA-256 mismatches',
 
         'rpc-wrong-network': 'RPC returned wrong network',
         'rpc-unavailable': 'No RPC available',
@@ -174,7 +183,12 @@ export const translations = {
         'debug-decrypting-done': 'Decryption complete',
         'debug-decrypting-summary': 'Decrypted',
         'debug-decrypting-failed': 'Failed to decrypt',
-        'debug-aes-gcm-init': 'Initializing AES-GCM key...'
+        'debug-aes-gcm-init': 'Initializing AES-GCM key...',
+
+        'debug-hash-mismatch': 'SHA-256 mismatch, file skipped',
+        'debug-hash-missing': 'SHA-256 hash missing in manifest, file skipped',
+        'debug-hash-mismatch-count': 'SHA-256 mismatch count',
+        'debug-invalid-path-count': 'Invalid path count'
     },
 
     eo: {
@@ -230,6 +244,8 @@ export const translations = {
         'zip-archives': 'ZIP-arkivaj',
         'failed-archives': 'Malsukcesintaj arkivoj',
         'missing-files': 'Nerestarigitaj dosieroj',
+        'invalid-paths': 'Nevalidaj dosierovojoj',
+        'hash-mismatches': 'SHA-256 malkongruoj',
 
         'rpc-wrong-network': 'RPC redonis malĝustan reton',
         'rpc-unavailable': 'Neniu RPC disponebla',
@@ -263,6 +279,11 @@ export const translations = {
         'debug-decrypting-done': 'Malĉifrado finita',
         'debug-decrypting-summary': 'Malĉifritaj',
         'debug-decrypting-failed': 'Malsukcesis malĉifri',
-        'debug-aes-gcm-init': 'Pravalorigante AES-GCM-ŝlosilon...'
+        'debug-aes-gcm-init': 'Pravalorigante AES-GCM-ŝlosilon...',
+
+        'debug-hash-mismatch': 'SHA-256 malkongruo, dosiero preterlasita',
+        'debug-hash-missing': 'SHA-256 hash mankas en manifesto, dosiero preterlasita',
+        'debug-hash-mismatch-count': 'Nombro de SHA-256 malkongruoj',
+        'debug-invalid-path-count': 'Nombro de nevalidaj vojoj'
     }
 };
