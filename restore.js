@@ -196,7 +196,13 @@ function renderStatusByKey(key) {
             `<div class="status-line"><span>${t('files-restored')}:</span> <strong>${data.restoredCount ?? 0}</strong></div>` +
             `<div class="status-line"><span>${t('zip-archives')}:</span> <strong>${data.zipCount ?? 0}</strong></div>` +
             `<div class="status-line"><span>${t('failed-archives')}:</span> <strong>${data.failedCount ?? 0}</strong></div>` +
-            `<div class="status-line"><span>${t('missing-files')}:</span> <strong>${data.missingCount ?? 0}</strong></div>`;
+            `<div class="status-line"><span>${t('missing-files')}:</span> <strong>${data.missingCount ?? 0}</strong></div>` +
+            (data.invalidPaths > 0
+                ? `<div class="status-line"><span>${t('invalid-paths')}:</span> <strong>${data.invalidPaths}</strong></div>`
+                : '') +
+            (data.hashMismatches > 0
+                ? `<div class="status-line"><span>${t('hash-mismatches')}:</span> <strong>${data.hashMismatches}</strong></div>`
+                : '');
     }
 }
 
@@ -585,6 +591,17 @@ async function verifyMasterKey(keyHex, expectedVerifier) {
 }
 
 /* ================================================== */
+/* SHA-256 palīgfunkcija                               */
+/* ================================================== */
+
+async function sha256Hex(bytes) {
+    const buffer = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(buffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+}
+
+/* ================================================== */
 /* Restore                                             */
 /* ================================================== */
 
@@ -617,18 +634,28 @@ async function restoreRepo() {
         const encryptionIVs = manifest.encryption?.ivs && typeof manifest.encryption.ivs === 'object'
             ? manifest.encryption.ivs
             : {};
-        const currentArchiveId = manifest.archive?.id || null;
         const zipIds = new Set();
         const fileZipMap = Object.create(null);
+        // ✅ R-02: missingPaths definēts pirms cikla, lai varētu uzskaitīt arī nederīgos ceļus
+        const missingPaths = [];
+        // ✅ R-02: atsevišķi skaitītāji nederīgiem ceļiem un hash neatbilstībām
+        let invalidPathCount = 0;
+        let hashMismatchCount = 0;
 
         for (const [filePath, info] of pathEntries) {
             if (typeof filePath !== 'string' || !filePath || filePath.startsWith('/') || filePath.startsWith('\\') || /^[a-zA-Z]:/.test(filePath) || filePath.includes('\\') || filePath.split('/').some(part => part === '..' || part === '.') || /[\x00-\x1f]/.test(filePath)) {
                 showDebug('debug-invalid-path', filePath);
+                // ✅ R-02: nederīgs ceļš tiek uzskaitīts kā neatjaunots
+                missingPaths.push(filePath);
+                invalidPathCount++;
                 continue;
             }
             const zipId = info && (info.zipId || info.id);
             if (typeof zipId !== 'string' || !MANIFEST_ID_RE.test(zipId)) {
                 showDebug('debug-invalid-zip-id', filePath);
+                // ✅ R-02: nederīgs ZIP ID arī tiek uzskaitīts kā neatjaunots
+                missingPaths.push(filePath);
+                invalidPathCount++;
                 continue;
             }
             zipIds.add(zipId);
@@ -704,7 +731,6 @@ async function restoreRepo() {
         showProgress(70);
 
         const finalFiles = Object.create(null);
-        const missingPaths = [];
         for (const [filePath, zipId] of Object.entries(fileZipMap)) {
             const zip = zipContents[zipId];
             if (!zip) {
@@ -720,7 +746,26 @@ async function restoreRepo() {
             }
 
             try {
-                finalFiles[filePath] = await zipFile.async('uint8array');
+                const fileBytes = await zipFile.async('uint8array');
+
+                // ✅ R-01: SHA-256 pārbaude pret manifesta hash
+                const expectedHash = manifest.paths?.[filePath]?.hash;
+                if (typeof expectedHash !== 'string' || !/^[0-9a-fA-F]{64}$/.test(expectedHash)) {
+                    showDebug('debug-hash-missing', filePath);
+                    missingPaths.push(filePath);
+                    hashMismatchCount++;
+                    continue;
+                }
+
+                const actualHash = await sha256Hex(fileBytes);
+                if (actualHash.toLowerCase() !== expectedHash.toLowerCase()) {
+                    showDebug('debug-hash-mismatch', `${filePath} (expected: ${expectedHash.slice(0, 16)}… actual: ${actualHash.slice(0, 16)}…)`);
+                    missingPaths.push(filePath);
+                    hashMismatchCount++;
+                    continue;
+                }
+
+                finalFiles[filePath] = fileBytes;
             } catch (error) {
                 showDebug('debug-read-failed', `${filePath} — ${error.message || error}`);
                 missingPaths.push(filePath);
@@ -731,6 +776,8 @@ async function restoreRepo() {
         showDebug('debug-restored-count', restoredCount);
         showDebug('debug-missing-count', missingPaths.length);
         showDebug('debug-failed-zips-count', failedZipIds.size);
+        if (invalidPathCount > 0) showDebug('debug-invalid-path-count', invalidPathCount);
+        if (hashMismatchCount > 0) showDebug('debug-hash-mismatch-count', hashMismatchCount);
 
         if (restoredCount === 0) {
             hideProgress();
@@ -774,7 +821,9 @@ async function restoreRepo() {
             restoredCount,
             zipCount: zipIds.size,
             failedCount: failedZipIds.size,
-            missingCount: missingPaths.length
+            missingCount: missingPaths.length,
+            invalidPaths: invalidPathCount,
+            hashMismatches: hashMismatchCount
         }, statusType);
 
     } catch (e) {
